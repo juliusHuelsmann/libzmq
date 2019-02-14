@@ -43,10 +43,10 @@ AC_SUBST(PACKAGE_VERSION)
 # ZeroMQ version 4.2.3: 6:3:1 (ABI version 5)
 # ZeroMQ version 4.2.4: 6:4:1 (ABI version 5)
 # ZeroMQ version 4.2.5: 6:5:1 (ABI version 5)
-# ZeroMQ version 4.3.1: 6:6:1 (ABI version 5)
+# ZeroMQ version 4.3.0: 6:6:1 (ABI version 5)
 #
 # libzmq -version-info current:revision:age
-LTVER="6:6:1"
+LTVER="7:0:2"
 AC_SUBST(LTVER)
 
 # Take a copy of original flags
@@ -108,6 +108,7 @@ AC_RUN_IFELSE(
             memset(&topsrv, 0, sizeof(topsrv));
             topsrv.family = AF_TIPC;
             topsrv.addrtype = TIPC_ADDR_NAME;
+            topsrv.addr.name.domain = tipc_addr (10, 10, 10);
             topsrv.addr.name.name.type = TIPC_TOP_SRV;
             topsrv.addr.name.name.instance = TIPC_TOP_SRV;
             fcntl(sd, F_SETFL, O_NONBLOCK);
@@ -635,6 +636,10 @@ AM_CONDITIONAL(ON_DEBIAN_KFREEBSD, test "x$libzmq_on_debian_kfreebsd" = "xyes")
 
 # Check for __atomic_Xxx compiler intrinsics
 AC_LANG_PUSH([C++])
+AX_CHECK_COMPILE_FLAG([-Wno-atomic-alignment],
+    [CXXFLAGS+=" -Wno-atomic-alignment"],
+    [],
+    [-Werror])
 LIBZMQ_CHECK_ATOMIC_INTRINSICS([
     AC_DEFINE([ZMQ_HAVE_ATOMIC_INTRINSICS],
               [1],
@@ -817,6 +822,21 @@ if test "x$enable_libunwind" != "xno"; then
                 AC_MSG_WARN([Cannot find libunwind])
             fi
         ])
+fi
+
+AC_ARG_ENABLE([radix-tree],
+    AS_HELP_STRING([--enable-radix-tree],
+        [Use radix tree implementation to manage subscriptions [default=DRAFT]]),
+    [radix_tree=$enableval],
+    [radix_tree=$enable_drafts])
+
+AM_CONDITIONAL([ENABLE_RADIX_TREE], [test x$radix_tree != xno])
+
+if test "x$radix_tree" = "xyes"; then
+    AC_MSG_NOTICE([Using radix tree implementation to manage subscriptions])
+    AC_DEFINE(ZMQ_USE_RADIX_TREE, 1, [Use radix tree implementation to manage subscriptions])
+else
+    AC_MSG_NOTICE([Using mtree implementation to manage subscriptions])
 fi
 
 # See if clang-format is in PATH; the result unblocks the relevant recipes

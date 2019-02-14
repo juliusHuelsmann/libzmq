@@ -114,10 +114,17 @@ else()
   option(ENABLE_DRAFTS "Build and install draft classes and methods" OFF)
 endif()
 if(ENABLE_DRAFTS)
+  option (ENABLE_RADIX_TREE "Use radix tree implementation to manage subscriptions" ON)
   add_definitions(-DZMQ_BUILD_DRAFT_API)
   set(pkg_config_defines "-DZMQ_BUILD_DRAFT_API=1")
 else()
+  option (ENABLE_RADIX_TREE "Use radix tree implementation to manage subscriptions" OFF)
   set(pkg_config_defines "")
+endif()
+
+if (ENABLE_RADIX_TREE)
+   message(STATUS "Using radix tree implementation to manage subscriptions")
+   add_definitions(-DZMQ_USE_RADIX_TREE)
 endif()
 
 option(WITH_MILITANT "Enable militant assertions" OFF)
@@ -1067,7 +1074,7 @@ else()
     set_target_properties(libzmq PROPERTIES
       COMPILE_DEFINITIONS "DLL_EXPORT"
       PUBLIC_HEADER "${public_headers}"
-      VERSION "5.1.6"
+      VERSION "5.2.0"
       SOVERSION "5"
       OUTPUT_NAME "zmq"
       PREFIX "lib")
